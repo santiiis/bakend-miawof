@@ -1,0 +1,104 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Dog {
+  id        String   @id @default(cuid())
+  name      String
+  breed     String?
+  ageYears  Int?
+  createdAt DateTime @default(now())
+
+  collar Collar?
+
+  vaccinations VaccinationRecord[]
+}
+
+model Collar {
+  id        String   @id @default(cuid())
+  serial    String   @unique
+  qrToken   String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  dogId String? @unique
+  dog   Dog?    @relation(fields: [dogId], references: [id])
+
+  pings LocationPing[]
+}
+
+model LocationPing {
+  id       String @id @default(cuid())
+  collarId String
+  collar   Collar @relation(fields: [collarId], references: [id])
+
+  lat       Float
+  lng       Float
+  accuracy  Float?
+  timestamp DateTime @default(now())
+}
+
+model FoundReport {
+  id        String   @id @default(cuid())
+  qrToken   String
+  message   String?
+  lat       Float?
+  lng       Float?
+  createdAt DateTime @default(now())
+}
+
+enum EventStatus {
+  SCHEDULED
+  CANCELLED
+  DONE
+}
+
+model Event {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  location    String?
+  startsAt    DateTime
+  status      EventStatus @default(SCHEDULED)
+  createdAt   DateTime    @default(now())
+}
+
+model Vaccine {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  records VaccinationRecord[]
+}
+
+model VaccinationRecord {
+  id String @id @default(cuid())
+
+  dogId String
+  dog   Dog    @relation(fields: [dogId], references: [id])
+
+  vaccineId String
+  vaccine   Vaccine @relation(fields: [vaccineId], references: [id])
+
+  appliedAt DateTime
+  nextDueAt DateTime?
+  notes     String?
+
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  password  String
+  createdAt DateTime @default(now())
+}
